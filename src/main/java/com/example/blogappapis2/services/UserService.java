@@ -10,7 +10,7 @@ import com.example.blogappapis2.payloads.UserDto;
 
 public interface UserService {
     
-	
+	UserDto registerUser(UserDto userDto);
 	UserDto createUser(UserDto user); 
 	UserDto updateUser(UserDto user,Integer userId);
 	UserDto getUserById(Integer userId);

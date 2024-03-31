@@ -8,11 +8,16 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.blogappapis2.config.AppConstants;
+import com.example.blogappapis2.entities.Role;
 import com.example.blogappapis2.entities.User;
 import com.example.blogappapis2.exceptions.ResourceNotFoundException;
+import com.example.blogappapis2.exceptions.UserAlreadyExistsException;
 import com.example.blogappapis2.payloads.UserDto;
+import com.example.blogappapis2.repositories.RoleRepo;
 import com.example.blogappapis2.repositories.UserRepo;
 import com.example.blogappapis2.services.UserService;
 
@@ -23,14 +28,26 @@ public class UserServiceImpl implements UserService{
 
 	@Autowired
 private UserRepo userRepo; 
+
+	@Autowired
+private RoleRepo roleRepo;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;	
+
+//private AppConstant appconstant;
 	
 	@Autowired
 	private ModelMapper modelMapper;
+	
+	@Autowired
+	PasswordEncoder encoder;
 	
 	@Override
 	public UserDto createUser(UserDto userDto) {
 		// TODO Auto-generated method stub
 		User user = this.dtoToUser(userDto);
+	    user.setPassword(encoder.encode(userDto.getPassword()));
 		this.userRepo.save(user); 
 		User savedUser = this.userRepo.save(user);
 		return this.userToDto(savedUser);
@@ -93,6 +110,30 @@ private UserRepo userRepo;
 //	    userDto.setAbout(user.getAbout());
 //	    userDto.setPassword(user.getPassword());
 	    return userDto;
+	}
+
+		@Override
+	public UserDto registerUser(UserDto userDto) {
+
+		
+		
+		// Check if the user with the given email already exists
+	    if (userRepo.existsByEmail(userDto.getEmail())) {
+	        throw new UserAlreadyExistsException(userDto.getEmail());
+	    }
+	    
+	    
+		User user = this.dtoToUser(userDto); 
+		
+		user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+		
+		// roles
+	
+		Role role = this.roleRepo.getById(AppConstants.NORAMAL_USER);
+		user.getRoles().add(role);
+		
+		User newUser = this.userRepo.save(user);
+		return this.userToDto(newUser);
 	}
 
 
